@@ -1,0 +1,328 @@
+##
+## A star
+##
+
+from collections import deque
+
+
+class Graph:
+    def __init__(self, adjacency_list):
+        self.adjacency_list = adjacency_list
+
+    def get_neighbors(self, v):
+        return self.adjacency_list[v]
+
+    # heuristic function with equal values for all nodes
+    def h(self, n):
+        H = {
+            'A': 1,
+            'B': 1,
+            'C': 1,
+            'D': 1
+        }
+
+        return H[n]
+
+    def a_star_algorithm(self, start_node, stop_node):
+        # open_list is a list of nodes which have been visited, but who's neighbors
+        # haven't all been inspected, starts off with the start node
+        # closed_list is a list of nodes which have been visited
+        # and who's neighbors have been inspected
+        open_list = set([start_node])
+        closed_list = set([])
+
+        # g contains current distances from start_node to all other nodes
+        # the default value (if it's not found in the map) is +infinity
+        g = {}
+
+        g[start_node] = 0
+
+        # parents contains an adjacency map of all nodes
+        parents = {}
+        parents[start_node] = start_node
+
+        while len(open_list) > 0:
+            n = None
+
+            # find a node with the lowest value of f() - evaluation function
+            for v in open_list:
+                if n == None or g[v] + self.h(v) < g[n] + self.h(n):
+                    n = v
+
+            if n == None:
+                print('Path does not exist!')
+                return None
+
+            # if the current node is the stop_node
+            # then we begin reconstructing the path from it to the start_node
+            if n == stop_node:
+                reconst_path = []
+                while parents[n] != n:
+                    reconst_path.append(n)
+                    n = parents[n]
+                reconst_path.append(start_node)
+                reconst_path.reverse()
+                print('Path found: {}'.format(reconst_path))
+                return reconst_path
+
+            # for all neighbors of the current node do
+            for (m, weight) in self.get_neighbors(n):
+                # if the current node isn't in both open_list and closed_list
+                # add it to open_list and note n as it's parent
+                if m not in open_list and m not in closed_list:
+                    open_list.add(m)
+                    parents[m] = n
+                    g[m] = g[n] + weight
+
+                # otherwise, check if it's quicker to first visit n, then m
+                # and if it is, update parent data and g data
+                # and if the node was in the closed_list, move it to open_list
+                else:
+                    if g[m] > g[n] + weight:
+                        g[m] = g[n] + weight
+                        parents[m] = n
+
+                        if m in closed_list:
+                            closed_list.remove(m)
+                            open_list.add(m)
+
+            # remove n from the open_list, and add it to closed_list
+            # because all of his neighbors were inspected
+            open_list.remove(n)
+            closed_list.add(n)
+
+        print('Path does not exist!')
+        return None
+
+
+adjacency_list = {
+    'A': [('B', 1), ('C', 3), ('D', 7)],
+    'B': [('D', 5)],
+    'C': [('D', 12)]
+}
+graph1 = Graph(adjacency_list)
+graph1.a_star_algorithm('A', 'D')
+
+##
+## Beam
+##
+
+from queue import PriorityQueue
+import copy
+
+# Filling adjacency matrix with empty arrays
+beamWidth = 2
+vertices = 14
+graph = [[] for i in range(vertices)]
+
+
+def add_edge(x, y, cost):
+    graph[x].append((y, cost))
+    graph[y].append((x, cost))
+
+def printt(t):
+    while not t.empty():
+        tt = t.get()
+        print(tt[0], tt[1])
+
+def beam_search(source, target, vertices):
+    visited = [0] * vertices
+    pq = PriorityQueue()
+    pq.put((0, source))
+    visited[source] = True
+    print("Path: ")
+    while not pq.empty():
+        u = pq.get()[1]
+        # Displaying the path having the lowest cost
+        print(u, end="\n")
+        if u == target:
+            break
+
+        wpq = pq
+        pq = PriorityQueue()
+
+        for v, c in graph[u]:
+            if not visited[v]:
+                visited[v] = True
+                wpq.put((c, v))
+
+        # choose only beamWidth number of candidates
+        i = 0
+        while not wpq.empty() and i < beamWidth:
+            pq.put(wpq.get())
+            i += 1
+    print()
+
+
+if __name__ == '__main__':
+    add_edge(0, 1, 1)
+    add_edge(0, 2, 8)
+    add_edge(1, 2, 12)
+    add_edge(1, 4, 13)
+    add_edge(2, 3, 6)
+    add_edge(4, 3, 3)
+
+    source = 0
+    target = 2
+    beam_saerch(source, target, vertices)
+
+#
+# best first
+#
+
+from queue import PriorityQueue
+
+# Filling adjacency matrix with empty arrays
+vertices = 14
+graph = [[] for i in range(vertices)]
+
+
+def add_edge(x, y, cost):
+    graph[x].append((y, cost))
+    graph[y].append((x, cost))
+
+
+def best_first_search(source, target, vertices):
+    visited = [0] * vertices
+    pq = PriorityQueue()
+    pq.put((0, source))
+    visited[source] = True
+    print("Path: ")
+    while not pq.empty():
+        u = pq.get()[1]
+        # Displaying the path having the lowest cost
+        print(u, end=" ")
+        if u == target:
+            break
+
+        for v, c in graph[u]:
+            if not visited[v]:
+                visited[v] = True
+                pq.put((c, v))
+    print()
+
+
+if __name__ == '__main__':
+    add_edge(0, 1, 1)
+    add_edge(0, 2, 8)
+    add_edge(1, 2, 12)
+    add_edge(1, 4, 13)
+    add_edge(2, 3, 6)
+    add_edge(4, 3, 3)
+
+    source = 0
+    target = 2
+    best_first_search(source, target, vertices)
+
+#
+# bfs
+#
+from collections import defaultdict
+
+
+class Graph:
+
+    def __init__(self):
+        self.graph = defaultdict(list)
+
+    def addEdge(self, u, v):
+        self.graph[u].append(v)
+
+    def BFS(self, s):
+        # Mark all the vertices as not visited
+        visited = [False] * (max(self.graph) + 1)
+        queue = []
+        # Mark the source node as
+        # visited and enqueue it
+        queue.append(s)
+        visited[s] = True
+        while queue:
+            s = queue.pop(0)
+            print(s, end=" ")
+            for i in self.graph[s]:
+                if visited[i] == False:
+                    queue.append(i)
+                    visited[i] = True
+
+
+g = Graph()
+edges = [(0, 1), (0, 2), (1, 2), (2, 0), (2, 3), (3, 3)]
+for x, y in edges:
+    g.addEdge(x, y)
+g.BFS(2)
+
+#
+# depth limited
+#
+ 
+def DLS(start, goal, path, level, maxD):
+    print('Current level: ', level)
+    path.append(start)
+    if start == goal:
+        return path
+    # max depth reached
+    if level == maxD:
+        return False
+    # visit its children
+    for child in graph[start]:
+        # recursively find a sol
+        if DLS(child, goal, path, level+1, maxD):
+            return path
+        path.pop()
+    return False
+
+
+graph = {
+    'A': ['B', 'C'],
+    'B': ['D', 'E'],
+    'C': ['F', 'G'],
+    'D': ['H', 'I'],
+    'E': ['J', 'K'],
+    'F': ['L', 'M'],
+    'G': ['N', 'O'],
+    'H': [],
+    'I': [],
+    'J': [],
+    'K': [],
+    'L': [],
+    'M': [],
+    'N': [],
+    'O': []
+}
+start = 'A'
+goal = 'D'
+maxD = 4
+path = []
+res = DLS(start, goal, path, 0, maxD)
+if(res):
+    print("Path to goal node available")
+    print("Path", path)
+else:
+    print("No path available for the goal node in given depth limit")
+
+#
+# dfs
+# def dfs(graph, start, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(start)
+
+    print(start)
+
+    for next in graph[start]:
+        if(next not in visited):
+            dfs(graph, next, visited)
+    return visited
+
+
+graph = {'0': set(['1', '2']),
+         '1': set(['0', '3', '5']),
+         '2': set(['0', '4']),
+         '3': set(['1']),
+         '4': set(['2']),
+         '5': set(['1']),
+         }
+
+dfs(graph, '0')
+
+
